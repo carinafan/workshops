@@ -1,0 +1,82 @@
+---
+title: "Penguins Love RMarkdown"
+author: "Carina"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+---
+
+The YAML header in the .Rmd file specifies how your document will be outputted. I like to use `html` so that I can have a floating table of contents, and if you want to be able to caption figures and reference them in the text and/or if you want numbered sections then use `bookdown::html_document2`. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+There's an invisible setup chunk here where I specify global options for all chunks going forward. If I'm making analysis reports to share I'll usually set `echo = FALSE` so that my code isn't cluttering up the document, and for chunks where neither the code nor the output needs to be shown I'll set `include = FALSE` in those individual chunk options.
+
+For this doc though, I'll leave `echo = TRUE` so you can see both the code and the output. 
+
+# Set up 
+
+Load packages first. I've named the below chunk `packages` (even though you can't see that name in the output html file) to make it easier to refer to when I'm editing the .Rmd file.
+
+```{r}
+# install.packages("palmerpenguins")
+library(palmerpenguins)
+library(magrittr)
+library(tidyverse)
+```
+
+The `magrittr` package is super handy for the `%<>%` pipe. Notice how I can put text in backticks to make them look like code in the output document.
+
+Let's take a look at the first 6 rows (or the "head") of our penguins dataset:
+
+```{r}
+head(penguins)
+```
+
+We can also look at the structure of the dataset to get some info about the variables:
+
+```{r}
+str(penguins)
+```
+
+# Do male and female penguins have different bill lengths?
+
+We can do a *t*-test to answer this question.
+
+```{r}
+results = t.test(bill_length_mm ~ sex, data = penguins) %>% 
+  print()
+```
+
+I've saved the results as the variable `results` so that I can use them when writing up a results section:
+
+There is a statistically significant difference between male and female penguins' bill lengths, *t*(`r results$parameter %>% round(2)`) = `r results$statistic %>% round(2)`, *p* < .001.
+
+To add in-line R code (as opposed to code in chunks), place the code in backticks and put `r` at the start of your code.
+
+## Plot the results
+
+```{r plot, fig.cap = "Difference in bill length between male and female penguins"}
+penguins %>% 
+  drop_na() %>% 
+  ggplot(aes(x = sex, y = bill_length_mm, colour = sex, fill = sex)) +
+  geom_violin(alpha = .4) +
+  geom_jitter(alpha = .6) +
+  scale_colour_manual(values = c("slateblue1", "tan1")) +
+  scale_fill_manual(values = c("slateblue1", "tan1")) +
+  guides(colour = FALSE, fill = FALSE) +
+  stat_summary(fun = mean, geom = "point", colour = "black") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = .1, colour = "black") +
+  theme_bw() +
+  labs(x = "Sex", y = "Bill length (mm)") +
+  scale_x_discrete(labels = c("female" = "Female", "male" = "Male"))
+```
+
+Figure \@ref(fig:plot) indicates that female penguins have shorter bills than do males. 
+
+To be able to refer to the figure, the code chunk containing the figure code needs to have both a name and a caption. 
+
